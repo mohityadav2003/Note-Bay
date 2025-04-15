@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const signInController = async (req,res)=>{
     try{
@@ -27,6 +28,20 @@ const signInController = async (req,res)=>{
                 message: "Incorrect Password"
             });
         }
+
+        const payload = {
+            id: user._id,
+            email: user.email
+        };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Set the token in an HTTP-Only cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+            maxAge: 3600000 // 1 hour
+        });
+
         return res.status(200).json({
             success: true,
             message: "User Login Successful",
